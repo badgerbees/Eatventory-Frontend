@@ -1,4 +1,5 @@
-const BASE = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+// Use VITE_API_URL (recommended) or fall back to legacy VITE_BACKEND_URL or localhost for development
+const BASE = import.meta.env.VITE_API_URL || import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
 function authHeader(token) {
   return token ? { Authorization: `Bearer ${token}` } : {}
