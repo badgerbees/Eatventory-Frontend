@@ -169,10 +169,11 @@ export async function adjustInventory(payload, token) {
 }
 
 // Sales
-export async function recordSale(payload, token) {
+export async function recordSale(payload, token, idempotencyKey = null) {
   // if token not passed explicitly, try common localStorage keys (idToken/firebase_id_token)
   const resolvedToken = token || await resolveToken()
   const headers = { 'Content-Type': 'application/json', ...authHeader(resolvedToken) }
+  if (idempotencyKey) headers['Idempotency-Key'] = idempotencyKey
   const res = await fetch(`${BASE}/sales/`, {
     method: 'POST',
     headers,

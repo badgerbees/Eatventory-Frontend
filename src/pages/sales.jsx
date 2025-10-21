@@ -11,6 +11,7 @@ export default function SalesPage() {
   const [saleQty, setSaleQty] = useState(1)
   const [counters, setCounters] = useState({})
   const [loading, setLoading] = useState(true)
+  const [submittingCommit, setSubmittingCommit] = useState(false)
   const { idToken: authIdToken, user } = useAuth()
   const [idToken, setIdToken] = useState('')
 
@@ -128,16 +129,19 @@ export default function SalesPage() {
 
           {/* Minimal: only Commit button */}
           <div className="mb-6 flex justify-end">
-            <button onClick={async () => {
+            <button disabled={submittingCommit} onClick={async () => {
               // commit all counters: build payload with items that have qty>0
               const today = new Date().toISOString().slice(0,10)
               const saleItems = Object.entries(counters || {}).filter(([id, q]) => Number(q) > 0).map(([id,q]) => ({ item_id: id, quantity: Number(q) }))
               if (saleItems.length === 0) return alert('Tidak ada penjualan untuk dikommit')
               try {
+                setSubmittingCommit(true)
+                // generate a client-side idempotency key to avoid duplicate commits on double-click
+                const idempotencyKey = `${new Date().toISOString()}_${Math.random().toString(36).slice(2,10)}`
                 const effectiveToken = authIdToken || idToken
                 const cashierId = (user && user.uid) || uidFromToken(effectiveToken)
                 if (!cashierId) return alert('Anda harus masuk untuk merekam penjualan (atau paste ID token).')
-                await recordSale({ items: saleItems, cashier_id: cashierId }, effectiveToken)
+                await recordSale({ items: saleItems, cashier_id: cashierId }, effectiveToken, idempotencyKey)
                 // decrement stock for each
                 for (const [id, q] of Object.entries(counters || {})) {
                   const qty = Number(q || 0)
@@ -154,6 +158,9 @@ export default function SalesPage() {
               } catch (err) {
                 console.error('Failed to commit sales:', err)
                 alert('Gagal mencatat penjualan hari ini')
+              }
+              finally {
+                setSubmittingCommit(false)
               }
             }} className="bg-red-500 text-white px-4 py-2 rounded">Commit Hari Ini</button>
           </div>

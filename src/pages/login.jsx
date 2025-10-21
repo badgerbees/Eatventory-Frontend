@@ -212,7 +212,7 @@ export default function EatventoryLogin() {
             <p className="text-sm text-gray-600">
               Belum punya akun?{' '}
               <button
-                onClick={(e) => e.preventDefault()}
+                onClick={(e) => { e.preventDefault(); navigate('/register') }}
                 className="text-purple-600 font-semibold hover:underline"
               >
                 Daftar di sini

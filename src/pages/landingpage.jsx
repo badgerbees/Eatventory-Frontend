@@ -86,9 +86,6 @@ export default function EatventoryLanding() {
                 Coba Eatventory
                 <ChevronRight className="group-hover:translate-x-1 transition-transform" size={20} />
               </a>
-              <button className="px-8 py-4 rounded-xl bg-white text-purple-600 font-semibold border-2 border-purple-200 hover:border-purple-400 hover:shadow-lg hover:scale-105 transition-all">
-                Lihat Demo
-              </button>
             </div>
 
             {/* Hero Mockup */}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, updateProfile, GoogleAuthProvider, signInWithPopup } from 'firebase/auth'
 import { auth, isConfigured } from '../firebase'
 import { useNavigate } from 'react-router-dom'
 import { Mail, Lock, Eye, EyeOff, User, Store } from 'lucide-react';
@@ -23,14 +23,17 @@ export default function EatventoryRegister() {
     e.preventDefault();
   if (formData.password !== formData.confirmPassword) return alert('Passwords do not match')
   if (!isConfigured) return alert('Firebase belum dikonfigurasi. Periksa VITE_FIREBASE_* env vars in .env')
+  setLoading(true)
   createUserWithEmailAndPassword(auth, formData.email, formData.password)
       .then(async (cred) => {
         // optional: set displayName to ownerName
         try {
           await updateProfile(cred.user, { displayName: formData.ownerName })
-        } catch (e) {}
-        const token = await cred.user.getIdToken()
-        try { localStorage.setItem('idToken', token) } catch (e) {}
+        } catch (e) { console.warn('updateProfile failed', e) }
+        try {
+          const token = await cred.user.getIdToken()
+          localStorage.setItem('idToken', token)
+        } catch (e) { console.warn('getIdToken failed', e) }
         // navigate to dashboard
         navigate('/dashboard')
       })
@@ -38,9 +41,32 @@ export default function EatventoryRegister() {
         console.error('Register failed', err)
         alert('Gagal mendaftar: ' + (err.message || String(err)))
       })
+      .finally(() => setLoading(false))
   };
 
   const navigate = useNavigate()
+  const [loading, setLoading] = useState(false)
+
+  const handleGoogleSignUp = async (e) => {
+    e.preventDefault()
+    if (!isConfigured) return alert('Firebase belum dikonfigurasi. Periksa VITE_FIREBASE_* env vars')
+    setLoading(true)
+    const provider = new GoogleAuthProvider()
+    try {
+      const result = await signInWithPopup(auth, provider)
+      // result.user is signed-in
+      try {
+        const token = await result.user.getIdToken()
+        localStorage.setItem('idToken', token)
+      } catch (e) { console.warn('getIdToken failed', e) }
+      navigate('/dashboard')
+    } catch (err) {
+      console.error('Google sign-in failed', err)
+      alert('Google sign-in failed: ' + (err.message || String(err)))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-indigo-50 to-sky-50 flex items-center justify-center p-6">
